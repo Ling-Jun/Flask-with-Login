@@ -1,5 +1,6 @@
 # manage database and users
 import sqlite3
+# import the Table class
 from sqlalchemy import Table, create_engine
 from sqlalchemy.sql import select
 from flask_sqlalchemy import SQLAlchemy
@@ -37,26 +38,29 @@ db = SQLAlchemy()
 # some notes on SQLALchemy: https://www.sqlalchemy.org/features.html
 
 
-# ??
+# config stores info about configuration
 config = configparser.ConfigParser()
 
 
 # create users class for interacting with users table
 class Users(db.Model):
+    # db = SQLAlchemy() as defined above
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(15), unique=True, nullable = False)
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(80))
+# Users is a SQLAlchemy() 
 
-# Table is imported from sqlalchemy
-# User.metadata is passed to Table() object
+
+# Table is a class imported from sqlalchemy
+# User.metadata is https://docs.sqlalchemy.org/en/14/core/metadata.html#sqlalchemy.schema.MetaData 
 Users_tbl = Table('users', Users.metadata)
 
 
 # function to create table using Users class
 def create_users_table():
     Users.metadata.create_all(engine)
-# create_all(engine) ?
+# create_all(engine) Create all tables stored in this metadata.
 
 
 #create the table
@@ -111,7 +115,9 @@ create = html.Div([ html.H1('Create User Account')
             , placeholder="email"
             , maxLength = 50)
         , html.Button('Create User', id='submit-val', n_clicks=0)
+        # n_clicks: an integer that represents the number of times that this element has been clicked on.
         , html.Div(id='container-button-basic')
+        # Div 'container-button-basic' describes the login hyperlink
     ])
 #end div
     
@@ -172,10 +178,17 @@ logout = html.Div([dcc.Location(id='logout', refresh=True)
         , html.Button(id='back-button', children='Go back', n_clicks=0)
     ])#end div
     
+
+
+# describes what the page looks like
 app.layout= html.Div([
             html.Div(id='page-content', className='content')
             ,  dcc.Location(id='url', refresh=False)
+            # The dcc.Location component represents the location or address bar in your web browser. 
+            # Through its href, pathname, search and hash properties you can access different portions of the url 
+            # that the app is loaded on.
         ])
+
 
 # callback to reload the user object. A callback to the login_manager is needed to 
 # complete the login processes. This callback will go with the rest of the Dash Callbacks.
@@ -183,9 +196,12 @@ app.layout= html.Div([
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
+
+# decide on which page to display
 @app.callback(
     Output('page-content', 'children')
     , [Input('url', 'pathname')])
+    # 
 def display_page(pathname):
     if pathname == '/':
         return create
@@ -222,10 +238,12 @@ def update_graph(dropdown_value):
                     , 'y': [2, 3, 2, 4]}]}]
 
 
+# Using a callback, the input is written to the database. The input is stored using the dash dependency State. 
 @app.callback(
    [Output('container-button-basic', "children")]
     , [Input('submit-val', 'n_clicks')]
     , [State('username', 'value'), State('password', 'value'), State('email', 'value')])
+    # The State allows the values to be input without firing the callback until the Create User button is pushed.
 def insert_users(n_clicks, un, pw, em):
     hashed_password = generate_password_hash(pw, method='sha256')
     if un is not None and pw is not None and em is not None:
@@ -234,6 +252,7 @@ def insert_users(n_clicks, un, pw, em):
         conn.execute(ins)
         conn.close()
         return [login]
+        # changes the 'Already have an account ?' Div into Login Div
     else:
         return [html.Div([html.H2('Already have a user account?'), dcc.Link('Click here to Log In', href='/login')])]
 
@@ -242,12 +261,16 @@ def insert_users(n_clicks, un, pw, em):
     Output('url_login', 'pathname')
     , [Input('login-button', 'n_clicks')]
     , [State('uname-box', 'value'), State('pwd-box', 'value')])
+    # The State allows the values to be input without firing the callback until the Login button is pushed.
 def successful(n_clicks, input1, input2):
     user = Users.query.filter_by(username=input1).first()
+    # 
     if user:
         if check_password_hash(user.password, input2):
+        # check_password_hash() is an imported function 
             login_user(user)
             return '/success'
+            # 
         else:
             pass
     else:
@@ -264,9 +287,9 @@ def update_output(n_clicks, input1, input2):
             if check_password_hash(user.password, input2):
                 return ''
             else:
-                return 'Incorrect username or password'
+                return 'Incorrect password or username doesn\'t exist'
         else:
-            return 'Incorrect username or password'
+            return 'Incorrect username'
     else:
         return ''
         
