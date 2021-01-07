@@ -49,8 +49,8 @@ class Users(db.Model):
     username = db.Column(db.String(15), unique=True, nullable = False)
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(80))
-# Users is a SQLAlchemy() 
-
+# note there isn't __init__() method, we can't create new Users with Users(username=xxx, email=yyy, password=zzz)
+# we create new Users with Table() defined in the following line. 
 
 # Table is a class imported from sqlalchemy
 # User.metadata is https://docs.sqlalchemy.org/en/14/core/metadata.html#sqlalchemy.schema.MetaData 
@@ -69,18 +69,21 @@ create_users_table()
 # instantiate dash app
 app = dash.Dash(__name__)
 server = app.server
+# 
 app.config.suppress_callback_exceptions = True
 
 
-# config the server to interact with the database
-# Secret Key is used for user sessions
+# config the server to interact with the database. Secret Key is used for user sessions
 server.config.update(
     # os.urandom is used to generate the SECRET_KEY.
     SECRET_KEY=os.urandom(12),
+    # the location of our database, /// means relative path, //// means absolute path
     SQLALCHEMY_DATABASE_URI='sqlite:///data.sqlite',
     SQLALCHEMY_TRACK_MODIFICATIONS=False)
 
+
 db.init_app(server)
+# 
 
 
 # The login manager lets the Dash app load a user from an ID and validate the user.
@@ -264,7 +267,7 @@ def insert_users(n_clicks, un, pw, em):
     # The State allows the values to be input without firing the callback until the Login button is pushed.
 def successful(n_clicks, input1, input2):
     user = Users.query.filter_by(username=input1).first()
-    # 
+    # find all users in my table with username = input1, grab the first entry
     if user:
         if check_password_hash(user.password, input2):
         # check_password_hash() is an imported function 
@@ -283,6 +286,7 @@ def successful(n_clicks, input1, input2):
 def update_output(n_clicks, input1, input2):
     if n_clicks > 0:
         user = Users.query.filter_by(username=input1).first()
+        # find all users in my table with username = input1, grab the first entry
         if user:
             if check_password_hash(user.password, input2):
                 return ''
